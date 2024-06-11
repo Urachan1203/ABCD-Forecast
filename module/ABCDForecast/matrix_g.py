@@ -6,30 +6,25 @@ class MatrixG:
         self.A = self.init(dim)
         self.A = self.permutate()
 
-    @jit
     def init(self, dim):
         A = np.eye(dim)
         for i in range(1, dim): A[i][i-1] = -1
         return A
 
-    @jit
     def permutate(self):
         A_permuted = np.random.permutation(self.A)
         A_permuted = np.random.permutation(A_permuted.T).T
         return A_permuted
     
-    @jit
     def inv(self):
         inv_A = np.linalg.inv(self.A)
         return MatrixG.from_array(inv_A)
     
-    @jit
     def __mul__(self, other):
         if isinstance(other, np.ndarray):
             return np.dot(self.A, other)
         else:
             raise ValueError(f"Not supported combination, {type(self)} and {type(other)}")
-        
     
     @classmethod
     def from_array(cls, array):

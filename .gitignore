@@ -1,3 +1,5 @@
 *.code-workspace
 *.pyc
+*.csv
+*.pkl
 .python-version

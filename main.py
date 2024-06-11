@@ -3,36 +3,52 @@ from module.dataset import Dataset
 from module.ABCDForecast.abcd_forecast import ABCDForecast
 from module.ABCDForecast.X.generator import XGeneratorRandom
 import glob
+import pickle
+import yaml
+import os
+from pprint import pprint
 
 def option():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--num_forecaster', type=int, default=100)
+    parser.add_argument('--num_forecaster', type=int, default=50)
+    return parser.parse_args()
 
 def main(args):
-
-    print("Generating Dataset")
-    paths = glob.glob('/Users/urachan/Desktop/dev/stock-analyze/data/quants/stock_price/*.csv')
-    dataset = Dataset(paths, window=30, late=1, train_rate=0.8)
-    X_train, Y_train, X_test, Y_test = dataset.generate()
+    
+    with open("./config/config.yaml", 'r') as yml:
+        config = yaml.safe_load(yml)
+        # config['train']['num_forecaster'] = args.num_forecaster   # overwritten by commandline args
+    
+    pprint(config)        
+    
+    paths = []
+    for stock_code in config['data']['stock']['topix100']:
+        paths.append(os.path.join('./data/quants/stock_price', f'{stock_code}0.csv'))
+    
+    stock_num = len(paths)
+    print(f'{stock_num} files ware loaded.')
+    pprint(paths)
+    
+    dataset = Dataset(paths, window=config['train']['window'], late=config['train']['late'], train_rate=config['train']['train_rate'])
+    X_train, Y_train, _, _ = dataset.generate()
 
     print("Constructing XGenerators")
-    X_generators = [XGeneratorRandom(num_stock=500) for _ in range(args.num_forecaster)]
+    X_generators = [XGeneratorRandom(num_stock=stock_num) for _ in range(config['train']['num_forecaster'])]
 
     # ABCDForecastの宣言。
     # forecasterの数だけXGeneratorを指定する
     abcd_forecast = ABCDForecast(
         X_train, 
         Y_train, 
-        num_forecaster=100, 
+        num_forecaster=config['train']['num_forecaster'], 
         X_generators=X_generators,
-        num_stock=500,
-        model='train'
+        forecaster_per_group=config['train']['forecaster_per_group'],
+        num_stock=stock_num,
+        mode='train'
     )
 
-    abcd_forecast.train()
-
-    Y_estimated = abcd_forecast.predict(X_test)
-    Y_estimated_detransform = abcd_forecast.detransform_y(Y_estimated)
+    print("train")
+    abcd_forecast.train_parallel()
     
     return
 
