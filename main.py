@@ -22,7 +22,8 @@ def main(args):
     pprint(config)        
     
     paths = []
-    for stock_code in config['data']['stock']['topix100']:
+    # for stock_code in config['data']['stock']['topix100']:
+    for stock_code in config['data']['stock']['topix30']:
         paths.append(os.path.join('./data/quants/stock_price', f'{stock_code}0.csv'))
     
     stock_num = len(paths)

@@ -20,7 +20,7 @@ class Forecaster:
         self.X_transform = self.X_generator.f(copy.deepcopy(X))
         self.predictor = DecisionTreeRegressor()
 
-        if mode == "train" : self.Y_transform = self.transform_y(Y)
+        if mode == "train" : self.Y_transform = self.transform_y(copy.deepcopy(Y))
         else : self.Y_transform = None
     
     def train(self):
@@ -33,11 +33,12 @@ class Forecaster:
     
     def predict(self, X):
         X_transform = self.X_generator.f(X)
-        return self.predictor.predict(
+        Y_predict = self.predictor.predict(
             X_transform.reshape(
                 (X_transform.shape[0], X_transform.shape[1] * X_transform.shape[2])
                 )
             )
+        return self.detransform_y(Y_predict)
 
     def transform_y(self, Y):
         for i in range(Y.shape[0]):
